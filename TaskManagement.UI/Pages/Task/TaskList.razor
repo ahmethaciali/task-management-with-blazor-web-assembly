@@ -1,0 +1,93 @@
+﻿@page "/tasklist"
+@using TaskManagement.UI.Models
+@using TaskManagement.UI.Services
+
+@inject HttpClient Http
+@inject ITaskService TaskService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<h3>TaskList</h3>
+
+@if (taskList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+    <p>
+        <NavLink class="nav-link" href="taskadd">
+            <span class="oi oi-plus" aria-hidden="true"></span> Create Task
+        </NavLink>
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Deadline</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in taskList)
+            {
+                <tr>
+                    <td>@task.Id</td>
+                    <td>@task.Title</td>
+                    <td>@task.Description</td>
+                    <td>@task.Deadline.ToShortDateString()</td>
+                    <td>@((TaskInfoStatus)task.Status)</td>
+
+                    <td><button class="btn btn-primary btn-sm" @onclick="@(() => GoToDetail(task.Id))">Detail</button></td>
+                    <td><button class="btn btn-primary btn-sm" @onclick="@(() => GoToEdit(task.Id))">Edit</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private TaskInfo[] taskList;
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        taskList = await TaskService.GetAll();
+        CheckInitializeNotification();
+        CheckOverdueTask(taskList);
+
+    }
+
+    void GoToDetail(int taskId)
+    {
+        NavigationManager.NavigateTo("/taskdetail/" + taskId);
+    }
+
+    void GoToEdit(int taskId)
+    {
+        NavigationManager.NavigateTo("/taskedit/" + taskId);
+    }
+
+    async void CheckInitializeNotification()
+    {
+        await JS.InvokeAsync<string>("InitializeNotification");
+    }
+
+    void CheckOverdueTask(TaskInfo[] taskList)
+    {
+        var overdueTaskList = taskList.Where(item => item.Status == (int)TaskInfoStatus.Active && item.Deadline < DateTime.Now);
+        if (overdueTaskList != null && overdueTaskList.Count() > 0)
+        {
+            var titleList = overdueTaskList.Select(item => item.Title).ToList();
+            PushNotification(titleList);
+        }
+    }
+
+    async void PushNotification(List<string> titleList)
+    {
+        var someResult = await JS.InvokeAsync<string>("NotifyMessage", titleList);
+    }
+}

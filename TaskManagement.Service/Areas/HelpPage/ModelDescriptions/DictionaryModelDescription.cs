@@ -1,0 +1,6 @@
+namespace TaskManagement.Service.Areas.HelpPage.ModelDescriptions
+{
+    public class DictionaryModelDescription : KeyValuePairModelDescription
+    {
+    }
+}

@@ -1,0 +1,72 @@
+﻿@page "/taskadd"
+@using TaskManagement.UI.Models
+@using TaskManagement.UI.Services
+@using TaskManagement.UI.Utilities
+
+@inject ITaskService TaskService
+@inject NavigationManager NavigationManager
+<h3>Create Task</h3>
+
+@if (task != null)
+{
+    <EditForm Model="@task" OnValidSubmit="@Create">
+        <DataAnnotationsValidator />
+        @*<ValidationSummary />*@
+        <div class="form-group">
+            <InputText Placeholder="Title" Class="form-control" Id="taskTitle" @bind-Value="@task.Title" />
+            <ValidationMessage For="@(()=>task.Title)" />
+        </div>
+
+        <div class="form-group">
+            <InputTextArea Placeholder="Description" Class="form-control" Id="description" @bind-Value="@task.Description" />
+            <ValidationMessage For="@(()=>task.Description)" />
+        </div>
+
+        <div class="form-group">
+            <InputDate Placeholder="Description" Class="form-control" Id="deadline" @bind-Value="@task.Deadline" />
+            <ValidationMessage For="@(()=>task.Deadline)" />
+        </div>
+
+        <div class="form-group">
+            @if (statusList != null)
+            {
+                <InputSelectNumber Class="form-control" Id="categoryId" @bind-Value="@task.Status">
+                    @foreach (var status in statusList)
+                            {
+                        <option value=@((byte)status)>@status.ToString()</option>
+                            }
+                    /**/
+                    /**/
+                </InputSelectNumber>
+            }
+
+            <ValidationMessage For="@(()=>task.Status)" />
+        </div>
+
+        <button class="btn btn-primary" type="submit">Create</button>
+
+    </EditForm>
+}
+else
+{
+    <h4>Loading...</h4>
+}
+
+@code {
+    TaskInfo task;
+    TaskInfoStatus[] statusList;
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        task = new TaskInfo()
+        {
+            Deadline = DateTime.Now
+        };
+        statusList = (TaskInfoStatus[])Enum.GetValues(typeof(TaskInfoStatus));
+    }
+
+    private async void Create()
+    {
+        await TaskService.Add(task);
+        NavigationManager.NavigateTo("/tasklist");
+    }
+}

@@ -1,0 +1,76 @@
+﻿@page "/taskdetail/{taskid:int}"
+@using TaskManagement.UI.Models
+@using TaskManagement.UI.Services
+@using TaskManagement.UI.Utilities
+
+@inject ITaskService TaskService
+@inject NavigationManager NavigationManager
+
+<h3>Detail for @TaskId</h3>
+
+@if (task != null)
+{
+<EditForm Model="@task">
+    <div class="form-group">
+        <InputText Placeholder="Title" disabled Class="form-control" Id="taskTitle" @bind-Value="@task.Title" />
+    </div>
+
+    <div class="form-group">
+        <InputTextArea Placeholder="Description" disabled Class="form-control" Id="description" @bind-Value="@task.Description" />
+    </div>
+
+    <div class="form-group">
+        <InputDate Placeholder="Description" disabled Class="form-control" Id="deadline" @bind-Value="@task.Deadline" />
+    </div>
+
+    <div class="form-group">
+        @if (statusList != null)
+        {
+            <InputSelectNumber Class="form-control" disabled Id="categoryId" @bind-Value="@task.Status">
+                @foreach (var status in statusList)
+                        {
+                    <option value=@((byte)status)>@status.ToString()</option>
+                        }
+            </InputSelectNumber>
+        }
+    </div>
+
+    <button class="btn btn-primary" @onclick="BackToList">Back To list</button>
+    <button class="btn btn-primary" @onclick="Edit">Edit</button>
+    <button class="btn btn-primary" @onclick="Delete">Delete</button>
+</EditForm>
+}
+else
+{
+    <h4>Loading...</h4>
+}
+
+@code {
+    [Parameter]
+    public int TaskId { get; set; }
+
+    TaskInfo task;
+    TaskInfoStatus[] statusList;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        task = await TaskService.Get(TaskId);
+        statusList = (TaskInfoStatus[])Enum.GetValues(typeof(TaskInfoStatus));
+    }
+
+    private void BackToList()
+    {
+        NavigationManager.NavigateTo("/tasklist");
+    }
+
+    private void Edit()
+    {
+        NavigationManager.NavigateTo("/taskedit/" + task.Id);
+    }
+
+    private async void Delete()
+    {
+        await TaskService.Delete(task.Id);
+        NavigationManager.NavigateTo("/tasklist");
+    }
+}
